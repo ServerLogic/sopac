@@ -227,7 +227,6 @@ if ($decade_count) {
   print "</ul></li>\n";
 }
 
-/* Uncomment for subjects facet
 $facet_subject = is_array($getvars['facet_subject']) ? $getvars['facet_subject'] : array();
 $subject_count = count($locum_result['facets']['subject']);
 if ($subject_count) {
@@ -255,7 +254,6 @@ if ($subject_count) {
   }
   print "</ul></li>\n";
 }
-*/
 
 ?>
   </ul>

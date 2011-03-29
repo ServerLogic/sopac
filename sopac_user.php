@@ -1072,7 +1072,10 @@ function sopac_fine_payment_form() {
   $varname = $args[1];
   $fine_total = $args[2];
   $hidden_vars_arr = $args[3];
-
+  if (!is_array($hidden_vars_arr)) {
+    drupal_set_message('No fines selected for payment');
+    drupal_goto('user/fines');
+  }
   $form['#redirect'] = 'user/fines';
   $form['sopac_payment_billing_info'] = array(
     '#type' => 'fieldset',
@@ -1957,10 +1960,8 @@ function sopac_list_add($bnum, $list_id = 0) {
   $output .= '<li class="button green"><a href="#" onclick="parent.document.location=(\'' . url('user/lists/' . $list_id) . '\')">Go to List</a></li>';
   $output .= '<li class="button red"><a href="#" onclick="parent.Lightbox.end(\'forceClose\')">Close this window</a></li>';
   $output .= '</ul>';
-
   return $output;
 }
-
 function sopac_list_move_top($list_id, $cur_pos) {
   global $user;
   $insurge = sopac_get_insurge();
@@ -1968,7 +1969,6 @@ function sopac_list_move_top($list_id, $cur_pos) {
   drupal_set_message("Item moved to top of list");
   drupal_goto("user/lists/$list_id");
 }
-
 function sopac_list_confirm_delete(&$form_state, $list_id) {
   $form = array('#list_id' => $list_id);
   return confirm_form(
@@ -1980,7 +1980,6 @@ function sopac_list_confirm_delete(&$form_state, $list_id) {
     t('Cancel'),
     'sopac_list_confirm_delete');
 }
-
 function sopac_list_confirm_delete_submit($form, &$form_state) {
   $insurge = sopac_get_insurge();
   if ($items = $insurge->get_list_items($form['#list_id'])) {

@@ -35,27 +35,19 @@ if (!module_exists('covercache')) {
       </author>
       <content type="xhtml" xml:lang="en" xml:base="http://<?php print $_SERVER['SERVER_NAME']; ?>/">
         <div xmlns="http://www.w3.org/1999/xhtml">
-        <table>
-          <tr>
-            <td>
               <p><?php print $cover_img; ?></p>
-            </td>
-            <td style="padding-left: 30px;">
-              <ul>
-                <li id="publisher">Publisher: <?php print $locum_result['pub_info'] . ', ' . $locum_result['pub_year']; ?></li>
-                <li id="added">Added on <?php print $locum_result['bib_created']; ?></li>
-                <?php if ($locum_result['callnum']) { ?><li>Call number: <strong><?php print $locum_result['callnum']; ?></strong></li> <?php } ?>
-                <li>
+          <ul>
+            <li id="publisher">Publisher: <?php print $locum_result['pub_info'] . ', ' . $locum_result['pub_year']; ?></li>
+            <li id="added">Added on <?php print $locum_result['bib_created']; ?></li>
+            <?php if ($locum_result['callnum']) { ?><li>Call number: <strong><?php print $locum_result['callnum']; ?></strong></li> <?php } ?>
+            <li>
                   <?php
-                  print $locum_result['status']['avail'] . t(' of ') . $locum_result['status']['total'] . ' ';
-                  print ($locum_result['status']['total'] == 1) ? t('copy available') : t('copies available');
-                  ?>
-                </li>
+              print $locum_result['status']['avail'] . t(' of ') . $locum_result['status']['total'] . ' ';
+              print ($locum_result['status']['total'] == 1) ? t('copy available') : t('copies available');
+              ?>
+            </li>
                 <li id="item-request">» <?php print l(t('Request this item'), $url_prefix . '/record/' . $locum_result['bnum'], array('absolute' => TRUE)); ?></li>
-              </ul>
-            </td>
-          </tr>
-        </table>
+          </ul>
         </div>
       </content>
     </entry>

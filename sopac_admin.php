@@ -25,7 +25,7 @@ function sopac_admin() {
       '#value' => 'Please select your ILS, then submit this form to continue setup.',
     );
   }
-
+  
   $form['sopac_general'] = array(
     '#type' => 'fieldset',
     '#title' => t('General Settings'),

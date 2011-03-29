@@ -210,6 +210,18 @@ if (count($item_status['items'])) {
     }
     $avail_class = ($item_status['avail'] ? "request-avail" : "request-unavail");
     print '<p class="item-request ' . $avail_class . '">' . $reqtext . '</p>';
+    <!-- <Craftyspace+> My List Link (if module installed) -->
+		<?php
+		if (isset($off_my_list_url)) {
+		?>
+			<li><strong>»</strong> <a href="<?php print $off_my_list_url ?>"><?php print t('Remove from list') ?></a></li>
+		<?php }
+		elseif (isset($onto_my_list_url)) {
+		?>
+			<li><strong>»</strong> <a href="<?php print $onto_my_list_url ?>"><?php print t('Add to list') ?></a></li>
+		<?php } ?>
+    <!-- </Craftyspace+> -->
+
     ?>
     </div>
 
@@ -239,14 +251,13 @@ if (count($item_status['items'])) {
           print "<p>Available Copies: <strong>$locations</strong></p>";
         }
 
-        print '<div><fieldset class="collapsible collapsed"><legend>Show All Copies (' . count($item_status['items']) . ')</legend><div>';
         if (variable_get('sopac_multi_branch_enable', 0)) {
           print theme('table', array("Location", "Call Number", "Branch", "Item Status"), $copy_status_array);
         }
         else {
           print theme('table', array("Location", "Call Number", "Item Status"), $copy_status_array);
         }
-        print '</div></fieldset></div>';
+        print '</fieldset>';
       }
       elseif ($item['download_link']) {
         print '<div class="item-request">';
@@ -317,6 +328,14 @@ if (count($item_status['items'])) {
         print '<p>No reviews have been written yet.  You could be the first!</p>';
       }
       print $rev_form ? $rev_form : '<p>' . l(t('Login'), 'user/login', array('query' => array('destination' => $_GET['q']))) . ' to write a review of your own.</p>';
+        print $rev_form;
+      }
+      else {
+        if (!$user->uid) {
+          // only display login link if user is not logged in
+          print '<p><a href="/user/login?destination=' . $_SERVER['REQUEST_URI'] . '">Login</a> to write a review of your own.</p>';
+        }
+      }
       ?>
     </div>
 

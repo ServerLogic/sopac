@@ -90,6 +90,14 @@ if ($locum_result['status']['holds'] > 0) {
         <?php } ?>
         <ul class="hitlist-avail">
           <li class="hitlist-subtitle"><?php print $availtext; ?></li>
+  		?>
+  			<li><strong>»</strong> <a href="<?php print $off_my_list_url ?>"><?php print t('Remove from list') ?></a></li>
+  		<?php }
+  		elseif (isset($onto_my_list_url)) {
+  		?>
+  			<li><strong>»</strong> <a href="<?php print $onto_my_list_url ?>"><?php print t('Add to list') ?></a></li>
+  		<?php } ?>
+      <!-- </Craftyspace+> -->
           <?php
             if ($locum_result['status']['avail']) {
               // Build list of locations

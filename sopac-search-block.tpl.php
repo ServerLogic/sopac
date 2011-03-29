@@ -182,7 +182,7 @@ if (is_array($getvars['facet_decade']) && count($getvars['facet_decade'])) {
 ?>
 
 <?php
-/* Uncomment for subjects facet
+// <CraftySpace+> subject facet
 if (is_array($getvars['facet_subject']) && count($getvars['facet_subject'])) {
   print '<br />Refined by Subject:';
   print '<div class="search-block-attr">';
@@ -196,7 +196,7 @@ if (is_array($getvars['facet_subject']) && count($getvars['facet_subject'])) {
   print implode('<br />', $subject_arr);
   print '</div>';
 }
-*/
+// </CraftySpace+>
 ?>
 <br />
 <?php

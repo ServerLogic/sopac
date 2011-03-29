@@ -38,6 +38,9 @@ function sopac_catalog_search() {
   $format = $getvars['search_format'];
   $location = $getvars['location'];
   $limit_avail = $getvars['limit_avail'];
+  // <CraftySpace+> support no covers
+  $covers_only = $getvars['covers_only'];
+  // </CraftySpace+>
   $pager_page_array = explode(',', $getvars['page']);
   $search_type = $actions[1];
   $search_term = utf8_urldecode($actions[2]);
@@ -106,7 +109,11 @@ function sopac_catalog_search() {
     $show_inactive = user_access('show suppressed records');
 
     // Get the search results from Locum
-    $locum_results_all = $locum->search($search_type, $search_term, $limit, $page_offset, $sort, $format, $location, $facet_args, FALSE, $limit_avail, $show_inactive);
+    // <CraftySpace+> support no covers
+    $locum_results_all = $locum->search($search_type, $search_term, $limit, $page_offset, $sort, $format, $location, $facet_args, FALSE, $limit_avail, $covers_only);
+    // </CraftySpace+>
+    /* <CraftySpace->
+    // </CraftySpace-> */
     $num_results = $locum_results_all['num_hits'];
     $result_info['limit'] = $limit;
     $result_info['num_results'] = $num_results;
@@ -244,8 +251,6 @@ function sopac_bib_record() {
   $item = $locum->get_bib_item($bnum, $show_inactive);
   $item_status = $locum->get_item_status($bnum, TRUE);
   if ($item['bnum']) {
-    // Load javascript collapsible code
-    drupal_add_js('misc/collapse.js');
 
     // Grab Syndetics reviews, etc..
     $review_links = $locum->get_syndetics($item['stdnum']);
@@ -444,6 +449,13 @@ function sopac_put_request_link($bnum, $avail = 0, $holds = 0, $mattype = 'item'
         $text = l(t('Register card to request'), 'user/' . $user->uid);
       }
     }
+  // <Craftyspace+>
+  // Or anon user but we're in kiosk mode.
+  else if (module_exists('sopac_kiosk') && kiosk_is_kiosk()) {
+    $link = "/sopac_kiosk/hold_form/$bnum";
+    $link_text = t('Request this item');
+  }
+  // </Craftyspace+>
     else {
       $text = l(t('Log in to request'), 'user/login', array('query' => drupal_get_destination()));
     }
@@ -480,12 +492,16 @@ function sopac_multibranch_hold_request(&$form_state, $bnum = null) {
       $form['hold_location']['#default_value'] = $options[$user->profile_pref_home_branch];
     }
   }
+  // <Craftyspace+>
   $form['bnum'] = array(
-    '#type' => 'hidden',
-    '#default_value' => $bnum,
+    '#type' => 'value',
+    '#value' => $bnum,
   );
+  // </Craftyspace>
   $form['op'] = array(
     '#type' => 'submit',
+    '#validate' => array('sopac_multibranch_hold_request_validate'),
+    '#submit' => array('sopac_multibranch_hold_request_submit'),
     '#value' => t('Request Hold'),
   );
 
@@ -501,7 +517,9 @@ function sopac_multibranch_hold_request(&$form_state, $bnum = null) {
 function sopac_multibranch_hold_request_validate($form, &$form_state) {
   global $user;
   //profile_load_profile($user);
-  //profile_load_profile(&$user);
+  // <Craftyspace->
+  // profile_load_profile(&$user);
+  // </Craftyspace>
 
   if ($user->uid) {
     if ($user->bcode_verified) {
@@ -546,19 +564,28 @@ function sopac_prev_search_url($override = FALSE) {
   }
 }
 
+// <Craftyspace+>
 /**
- * Requests a particular item via locum then displays the results of that request
- *
- * @return string Request result
+ * Requests a particular item via locum then displays the results of that request.
+ * This is intended to be used as a menu item. The user's card number and PIN
+ * are retrieved from the current user's profile.
+ * @param $bnum
+ *   The bib number
+ * @param $pickup_arg
+ *   Pickup argument
+ * @param $pickup_name
+ *   Pickup name
  */
-function sopac_request_item() {
+function sopac_request_item_menu($bnum, $pickup_arg = NULL, $pickup_name = NULL) {
   global $user;
   // avoid php errors when debugging
   $varname = $request_result_msg = $request_error_msg = $item_form = $bnum = NULL;
 
   $button_txt = t('Request Selected Item');
+    
   //profile_load_profile(&$user);
   if ($user->uid && $user->bcode_verified) {
+    $hold_result = sopac_request_item($bnum, $pickup_arg, $pickup_name, $user->profile_pref_cardnum, $user->locum_pass);
     // support multi-branch & user home branch
     $locum = sopac_get_locum();
     $actions = sopac_parse_uri();
@@ -568,6 +595,7 @@ function sopac_request_item() {
     $pickup_name = $locum->locum_config['branches'][$pickup_arg];
     $varname = $actions[3] ? $actions[3] : NULL;
     $bib_item = $locum->get_bib_item($bnum, TRUE);
+
     $hold_result = $locum->place_hold($user->profile_pref_cardnum, $bnum, $varname, $user->locum_pass, $pickup_arg);
 
     // Set home branch if none set
@@ -578,6 +606,9 @@ function sopac_request_item() {
 
     if ($hold_result['success']) {
       // handling multi-branch scenario
+      $locum = sopac_get_locum();
+      $bib_item = $locum->get_bib_item($bnum);
+
       $request_result_msg = t('You have successfully requested a copy of ') . '<span class="req_bib_title"> ' . $bib_item['title'] . '</span>';
       if ($pickup_name) {
         $request_result_msg .= t(' for pickup at ') . $pickup_name;
@@ -729,9 +760,9 @@ function sopac_request_item() {
           $status = '<span class="non_circ_msg">' . $status . '</span>';
         }
         $rows[] = array(
-          $selection['location'],
-          $selection['callnum'],
-          $status,
+        $selection['location'],
+        $selection['callnum'],
+        $status,
           $request,
         );
       }
@@ -762,8 +793,23 @@ function sopac_request_item() {
   }
   $result_page = theme('sopac_request', $request_result_msg, $request_error_msg, $item_form, $bnum);
   return '<p>'. t($result_page) .'</p>';
+
+}
+/**
+ * Make a sopac hold request.
+ * This is just a wrapper around $locum->place_hold()
+ *
+ * @return array $hold_result
+ *   The result of the hold request. May contain keys 'success', 'error', 'selection',
+ */
+function sopac_request_item($bnum, $pickup_arg, $pickup_name, $cardnum, $locum_pass) {
+  $locum = sopac_get_locum();
+  $bib_item = $locum->get_bib_item($bnum);
+  $hold_result = $locum->place_hold($cardnum, $bnum, NULL, $locum_pass, $pickup_arg);
+  return $hold_result;
 }
 
+// </Craftyspace>
 /**
  * Returns the save search link.
  *
@@ -849,7 +895,22 @@ function sopac_search_form_basic() {
     '#default_value' => $stype_selected,
     '#options' => $stypes,
   );
+   // <CraftySpace+> search form: if no formats
+  if (is_array($sformats) && count($sformats)) {
+  // </CraftySpace+>
+	  $form['basic']['inline']['search_format'] = array(
+	    '#type' => 'select',
+	    '#title' => t(' in '),
+	    '#default_value' => $sformat_selected,
+	    '#selected' => $sformat_selected,
+	    '#options' => $sformats,
+	  );
+  }
+  // <CraftySpace+> search form: if no formats
+  else {
+
   $form['inline']['search_format'] = array(
+
     '#type' => 'select',
     '#title' => t(' in '),
     '#default_value' => $_GET['search_format'],
@@ -879,7 +940,15 @@ function sopac_search_form_basic() {
   $form['inline2']['limit_avail'] = array(
     '#type' => 'select',
     '#title' => 'limit to items available at',
-    '#options' => array_merge(array('any' => "Any Location"), $locum_cfg['branches']),
+  	$form['basic']['limit']['limit_avail'] = array(
+  		'#type' => 'select',
+  		'#title' => t('limit to items available at'),
+  		// <CraftySpace+> No point in having any as option when require checkbox
+  		'#options' => $locum_cfg['branches'],
+  		// </CraftySpace+>
+  		/* <CraftySpace->
+  		'#options' => array_merge(array('any' => t('Any Location')), $locum_cfg['branches']),
+  		// </CraftySpace-> */
     '#default_value' => $getvars['limit_avail'],
   );
   return $form;
@@ -993,7 +1062,12 @@ function sopac_search_form_adv() {
   }
 
   asort($locum_cfg[formats]);
+   // <CraftySpace+> search form: if no formats
+  if (is_array($locum_cfg['formats']) && count($locum_cfg['formats'])) {
+  // </CraftySpace+>
+
   $form['search_format'] = array(
+ 
     '#type' => 'select',
     '#title' => t('In these formats'),
     '#size' => 5,
@@ -1001,11 +1075,25 @@ function sopac_search_form_adv() {
     '#options' => $locum_cfg[formats],
     '#multiple' => TRUE,
   );
+    }
+  // <CraftySpace+> search form: if no formats
+  else {
+	  $form['search_format'] = array(
+	    '#type' => 'hidden',
+	    '#value' => '',
+	  );
+  }
+  // </CraftySpace+>
+
   $form['publisher'] = array(
     '#type' => 'textfield',
     '#title' => t('Publisher'),
     '#size' => 20,
     '#maxlength' => 255,
+	    '#value' => '',
+	  );
+  }
+  // </CraftySpace+>
   );
   $form['pub_year_start'] = array(
     '#type' => 'textfield',
@@ -1041,14 +1129,12 @@ function sopac_search_catalog_validate($form, &$form_state) {
     form_set_error('search_query', t('Please enter a search term to start your search'));
   }
 }
-
 /**
  * build a search url based on form submission, handles both basic and advanced search forms
  */
 function sopac_search_catalog_submit($form, &$form_state) {
   $locum = sopac_get_locum('locum');
   $locum_cfg = $locum->locum_config;
-
   $search_query = trim($form_state['values']['search_query']);
   if (!$search_query) {
     $search_query = '*';
@@ -1059,7 +1145,6 @@ function sopac_search_catalog_submit($form, &$form_state) {
     $search_type = $search_type_arr[1];
     $search_fmt = $search_type_arr[2];
     $search_url = variable_get('sopac_url_prefix', 'cat/seek') . '/search/' . $search_type . '/' . $search_query;
-
     // Material / Format types
     if ($search_fmt) {
       if ($search_fmt != 'all') {
@@ -1074,7 +1159,6 @@ function sopac_search_catalog_submit($form, &$form_state) {
         $uris['search_format'] = $form_state['values']['search_format'];
       }
     }
-
     // Location selections overrule collection selections and act as
     // a filter if they are in a selection colection.
     if ($form_state['values']['collection']) {
@@ -1105,17 +1189,14 @@ function sopac_search_catalog_submit($form, &$form_state) {
     if (count($locations)) {
       $uris['location'] = trim(implode('|', $locations));
     }
-
     // Sort variable
     if ($form_state['values']['sort']) {
       $uris['sort'] = $form_state['values']['sort'];
     }
-
     // Age Group variable
     if ($form_state['values']['age_group']) {
       $uris['age'] = $form_state['values']['age_group'];
     }
-
     // Limit to Available
     if ($form_state['values']['limit_avail'] || $form_state['values']['limit']) {
       if (variable_get('sopac_multi_branch_enable', 0)) {
@@ -1127,12 +1208,10 @@ function sopac_search_catalog_submit($form, &$form_state) {
         $uris['limit_avail'] = 'any';
       }
     }
-
     // Publisher Search
     if ($form_state['values']['publisher']) {
       $uris['pub'] = trim($form_state['values']['publisher']);
     }
-
     // Publication date ranges
     if ($form_state['values']['pub_year_start'] || $form_state['values']['pub_year_end']) {
       $uris['pub_year'] = trim($form_state['values']['pub_year_start']) . '|' .
@@ -1149,10 +1228,8 @@ function sopac_search_catalog_submit($form, &$form_state) {
         break;
     }
   }
-
   drupal_goto($search_url, $uris);
 }
-
 function array2xml($array) {
   $xml="";
   foreach ($array as $key => $value) {

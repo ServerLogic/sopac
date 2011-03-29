@@ -146,37 +146,37 @@ function sopac_block($op = 'list', $delta = 0) {
           // SOPAC overview block for patron tags
           require_once('sopac_social.php');
           $block['subject'] = t('Popular Tags');
-          $block['content'] = theme('sopac_tag_block', 'overview');
+          $block['content'] = theme('sopac_tag_block','overview');
           break;
         case 3:
           // SOPAC overview block for patron reviews
           require_once('sopac_social.php');
           $block['subject'] = t('New Reviews');
-          $block['content'] = theme('sopac_review_block', 'overview');
+          $block['content'] = theme('sopac_review_block','overview');
           break;
         case 4:
           // SOPAC item record block for patron tags
           require_once('sopac_social.php');
           $block['subject'] = t('Record Tags');
-          $block['content'] = theme('sopac_tag_block', 'record');
+          $block['content'] = theme('sopac_tag_block','record');
           break;
         case 5:
           // SOPAC item record block for patron reviews
           require_once('sopac_social.php');
           $block['subject'] = t('Reviews');
-          $block['content'] = theme('sopac_review_block', 'record');
+          $block['content'] = theme('sopac_review_block','record');
           break;
         case 6:
           // SOPAC personal record block for patron's own tags
           require_once('sopac_social.php');
           $block['subject'] = t('My Top Tags');
-          $block['content'] = theme('sopac_tag_block', 'personal');
+          $block['content'] = theme('sopac_tag_block','personal');
           break;
         case 7:
           // SOPAC personal record block for patron's own reviews
           require_once('sopac_social.php');
           $block['subject'] = t('My Reviews');
-          $block['content'] = theme('sopac_review_block', 'personal');
+          $block['content'] = theme('sopac_review_block','personal');
           break;
         case 8:
           require_once('sopac_user.php');
@@ -202,6 +202,15 @@ function sopac_menu() {
 
   $items = array();
 
+	// <CraftySpace+> Easy access function for debugging purposes.
+	$items['sopac/sidtest'] = array(
+		'title' => 'Search Handler',
+		'page callback' => 'sopac_sidtest',
+		'access arguments' => array('access administration pages'),
+		'type' => MENU_CALLBACK,
+	);
+	// </CraftySpace+>
+
   $items['admin/settings/sopac'] = array(
     'title' => 'SOPAC settings',
     'description' => 'SOPAC configuration options',
@@ -211,6 +220,17 @@ function sopac_menu() {
     'file' => 'sopac_admin.php',
     'type' => MENU_NORMAL_ITEM,
   );
+
+	// <CraftySpace+ type="UNSHARED"> Support a SOPAC front page URL with the same content as /search when
+	// no search is done
+	$items[$sopac_prefix] = array(
+		'title' => 'Catalog',
+		'page callback' => 'sopac_catalog_search',
+		'access arguments' => array('access content'),
+		'file' => 'sopac_catalog.php',
+		'type' => MENU_CALLBACK,
+	);
+	// </CraftySpace+>
 
   $items[$sopac_prefix . '/search'] = array(
     'title' => 'Catalog Search',
@@ -247,7 +267,9 @@ function sopac_menu() {
 
   $items[$sopac_prefix . '/request'] = array(
     'title' => 'Request an Item',
-    'page callback' => 'sopac_request_item',
+    // <Craftyspace+>
+    'page callback' => 'sopac_request_item_menu',
+    // </Craftyspace>
     'access arguments' => array('access content'),
     'file' => 'sopac_catalog.php',
     'type' => MENU_CALLBACK,
@@ -609,6 +631,18 @@ function sopac_theme() {
   );
 }
 
+// Implementation of hook_forms
+function sopac_forms() {
+  $args = func_get_args();
+  $form_id = $args[0];
+
+  $forms = array();
+  if (strpos($form_id, "sopac_multibranch_hold_request") === 0) {
+    $forms[$form_id]['callback'] = 'sopac_multibranch_hold_request';
+  }
+  return $forms;
+}
+
 /**
  * Preprocess function (apparently needs to be in module page so found by theme register)
  *
@@ -963,3 +997,114 @@ function sopac_lists_access($list_id) {
   }
   return $access;
 }
+
+// <CraftySpace+> tag list
+// temp fix: replace w/locum & insurge hooks
+function sopac_get_user_info() {
+	global $user;
+	$user_info = array(
+		'uid' => $user->uid,
+	);
+	drupal_alter('sopac_user', $user_info);
+	return $user_info;
+}
+// </CraftySpace+>
+
+// <CraftySpace+ type="INTERNAL"> Easy access functions for debugging purposes.
+function sopac_sidtest() {
+  $insurge = sopac_get_insurge();
+  $insurge2 = sopac_get_insurge();
+  $insurge5 = sopac_get_insurge('client', TRUE);
+  $insurge3 = sopac_get_insurge('server');
+  $insurge4 = sopac_get_insurge('server');
+  $insurge6 = sopac_get_insurge('insurge');
+  $insurge7 = sopac_get_insurge('insurge');
+  return;
+
+  $insurge = sopac_get_insurge();
+  $tags = $insurge->prepare_tag_string("{an admin list} 'quoted words' plain words");
+  return implode(' :: ', $tags);
+  /* dynamically generating and manipulating a view
+  $view = views_get_view('branches_list');
+  $view->execute();
+  foreach ($view->field as $field) {
+  	$alias = $field->field_alias;
+  	$allowed_values = $field->content_field['allowed_values'];
+  	break;
+  }
+  print $string;
+//  $allowed_values = split('/\n/', $allowed_values);
+  $allowed_values = explode(chr(13) . chr(10), $allowed_values);
+  $all_values = array();
+  foreach ($allowed_values as $row) {
+  	$parts = explode('|', $row);
+  	$all_values[$parts[1]] = $parts[0];
+  }
+  $options = array();
+  foreach ($view->result as $result) {
+    $found = $result->{$alias};
+    $key = $all_values[$found];
+    $options[$key] = $found;
+  }
+
+  return "dogs";
+  */
+
+	// set up access to locum_server, and thus to things like sopac db
+/*	$sFile = trim(variable_get('sopac_locum_path', '/usr/local/lib/locum')) . '/locum-server.php';
+	include_once($sFile);
+	$locum = sopac_get_locum('server');
+*/
+
+	$locum = new sopac_get_locum();
+	$patron_data = array(
+		'first_name' => 'Fenway',
+		'middle' => '',
+		'last_name' => 'Park',
+		'apartment' => '',
+		'street' => '4 Yawkey Way',
+		'city' => 'Boston',
+		'state' => 'MA',
+		'zip' => '02215',
+		'home_phone' => '617-267-9440',
+		'email' => 'Fenway@RedSox.com',
+		'pin' => '1234',
+		'dob' => '04/20/1912',
+		'branch' => 'ABORO-MAIN',
+	);
+	$result = $locum->create_patron($patron_data);
+	return;
+	$cardnum = '22043000002474';
+	$email = 'dogs@cats3.com';
+	$pin = 'ab78cd3q';
+	$success = $locum->set_patron_info($cardnum, $email, $pin);
+	$patron = $locum->get_patron_info($cardnum);
+	return;
+/*
+	// instantiate sopac db connection
+	$db =& MDB2::connect($locum->dsn);
+
+	// to run an insert, update or delete query
+	$sql_prep = $db->prepare("delete from locum_bib_items where bnum = 1139572");
+	$affrows = $sql_prep->execute();
+	$sql_prep->free();
+
+	// to run a select query and output results
+	$sql = "select bnum, download_links from locum_bib_items where bnum = 1139572";
+	$result =& $db->query($sql);
+	$aResult = $result->fetchAll(MDB2_FETCHMODE_ASSOC);
+	$s = '';
+	foreach ($aResult as $row) {
+		$s .= "<br>" . $row['bnum'] . ' = ' . $row['download_links'];
+	}
+
+	$db->disconnect();
+*/
+}
+
+/*
+function sopac_form_alter(&$form, &$form_state, $form_id) {
+	drupal_set_message($form_id);
+}
+*/
+// </CraftySpace+>

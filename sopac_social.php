@@ -290,6 +290,12 @@ function sopac_user_tag_delete_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Generate a list of items current user tagged with a tag
+ *
+ * @param string $tag passed in from url by menu handler
+ * @return string
+ */
 function sopac_user_tag_hitlist($tag) {
   global $user;
 
