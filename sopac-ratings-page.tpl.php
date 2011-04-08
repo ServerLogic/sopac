@@ -21,14 +21,13 @@ if (count($ratings_arr['ratings'])) {
     print '<tr><td style="width: 100px;">';
     print theme_sopac_get_rating_stars($rating['bnum'], $rating['rating'], FALSE, TRUE) . ' ';
     print '</td><td>';
-    $path = variable_get('sopac_url_prefix', 'cat/seek') . '/record/' . $rating['bnum'];
-    print l($ratings_arr['bibs'][$rating['bnum']]['title'], $path);
+    print '<a href="/' . variable_get('sopac_url_prefix', 'cat/seek') . '/record/' . $rating['bnum'] . '">' .
+      $ratings_arr['bibs'][$rating['bnum']]['title'] . '</a>';
     print '</td><td>';
     print date("m-d-Y", $rating['rate_date']);
     print '</td></tr>';
   }
   print '</table>';
-}
-else {
+} else {
   print '<div class="overview-nodata">' . t('You have not rated any items yet.') . '</div>';
 }

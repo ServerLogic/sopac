@@ -110,7 +110,7 @@ function sopac_catalog_search() {
 
     // Get the search results from Locum
     // <CraftySpace+> support no covers
-    $locum_results_all = $locum->search($search_type, $search_term, $limit, $page_offset, $sort, $format, $location, $facet_args, FALSE, $limit_avail, $covers_only);
+    $locum_results_all = $locum->search($search_type, $search_term, $limit, $page_offset, $sort, $format, $location, $facet_args, FALSE, $limit_avail, $show_inactive, $covers_only);
     // </CraftySpace+>
     /* <CraftySpace->
     // </CraftySpace-> */

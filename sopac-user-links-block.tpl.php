@@ -1,19 +1,19 @@
 <? /* page added by CraftySpace */ ?>
 
 <ul>
-  <li class="leaf first"><?php print l(t('Summary'), 'user'); ?></li>
-  <li class="leaf"><?php print l(t('My Checkouts'), 'user/checkouts'); ?></li>
-  <li class="leaf"><?php print l(t('My Requests'), 'user/requests'); ?></li>
-  <li class="leaf"><?php print l(t('My Fines'), 'user/fines'); ?></li>
-  <li class="expanded last"><?php print l(t('My Library'), 'user/library'); ?>
+  <li class="leaf first"><a href="/user">Summary</a></li>
+  <li class="leaf"><a href="/user/checkouts">My Checkouts</a></li>
+  <li class="leaf"><a href="/user/holds">My Holds</a></li>
+  <li class="leaf"><a href="/user/fines">My Fines</a></li>
+  <li class="expanded last"><a href="/user/library">My Library</a>
     <ul class="menu">
-      <li class="leaf first"><?php print l(t('Ratings'), 'user/library/ratings'); ?></li>
-      <li class="leaf"><?php print l(t('Reviews'), 'user/library/reviews'); ?></li>
-      <li class="leaf"><?php print l(t('Tags'), 'user/library/tags'); ?></li>
-      <li class="leaf last"><?php print l(t('Searches'), 'user/library/searches'); ?></li>
+      <li class="leaf first"><a title="" href="/user/library/ratings">Ratings</a></li>
+      <li class="leaf"><a title="" href="/user/library/reviews">Reviews</a></li>
+      <li class="leaf"><a title="" href="/user/library/tags">Tags</a></li>
+      <li class="leaf last"><a title="" href="/user/library/searches">Searches</a></li>
     </ul>
   </li>
-  <li class="leaf"><?php print l(t('Search Catalog'), 'catalog/search'); ?></li>
-  <li class="leaf"><?php print l(t('Edit Account'), "/user/$uid/edit"); ?></li>
-  <li class="leaf last"><?php print l(t('Log out'), 'logout'); ?></li>
+  <li class="leaf"><a title="" href="/catalog/search">Search Catalog</a></li>
+  <li class="leaf"><a title="" href="/user/<?php print $uid ?>/edit">Edit Account</a></li>
+  <li class="leaf last"><a href="/logout">Log out</a></li>
 </ul>
